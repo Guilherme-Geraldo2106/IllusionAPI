@@ -24,16 +24,52 @@ namespace IllusionAPI
                 if (illusionRoute == null)
                     continue;
 
-                var bodySections = routeSection.GetSection("response:body").GetChildren().ToList();
+                var requestBodySections = routeSection.GetSection("requestBody")?.GetChildren().ToList();
+                if (requestBodySections.Any())
+                {
+                    illusionRoute.RequestBody = FormatBodyAsObject(requestBodySections);
+                }
 
-                if (!bodySections.Any())
-                    continue;
-
-                bool isArray = bodySections.First().GetChildren().Any();
-                object formattedBody = isArray ? FormatBodyAsArray(bodySections) : FormatBodyAsObject(bodySections);
-
-                illusionRoute.Response.Body = formattedBody;
+                var responseSection = routeSection.GetSection("response");
+                if (responseSection.Exists())
+                {
+                    if (responseSection.GetChildren().Any(child => child.Key == "status"))
+                    {
+                        illusionRoute.Responses = new List<Response>
+                    {
+                        ParseSingleResponse(responseSection)
+                    };
+                    }
+                    else
+                    {
+                        var responseListSections = responseSection.GetChildren().ToList();
+                        if (responseListSections.Any())
+                        {
+                            illusionRoute.Responses = responseListSections
+                                .Select(ParseSingleResponse)
+                                .ToList();
+                        }
+                    }
+                }
             }
+        }
+
+        private Response ParseSingleResponse(IConfigurationSection responseSection)
+        {
+            var status = responseSection.GetValue<int>("status");
+            var condition = responseSection.GetValue<string>("condition", string.Empty);
+            var bodySections = responseSection.GetSection("body")?.GetChildren().ToList();
+
+            object formattedBody = bodySections.Any() && bodySections.First().GetChildren().Any()
+                ? FormatBodyAsArray(bodySections)
+                : FormatBodyAsObject(bodySections);
+
+            return new Response
+            {
+                Status = status,
+                Condition = condition,
+                Body = formattedBody
+            };
         }
 
         private object FormatBodyAsArray(List<IConfigurationSection> bodySections)
@@ -57,26 +93,28 @@ namespace IllusionAPI
             return JsonConvert.DeserializeObject<object>(json) ?? new object();
         }
 
-
         public static RouteConfig GenRouteConfig(IConfigurationSection irouteConfSection)
         {
             RouteConfig routeConfig = irouteConfSection.Get<RouteConfig>();
             routeConfig.FormatBodyJson(irouteConfSection.GetSection("illusionRoutes").GetChildren().ToList());
-
             return routeConfig;
         }
     }
+
+
 
     public class IllusionRoute
     {
         public string Method { get; set; }
         public string Path { get; set; }
-        public Response Response { get; set; }
+        public object? RequestBody { get; set; }
+        public List<Response> Responses { get; set; }
     }
 
     public class Response
     {
         public int Status { get; set; }
+        public string Condition { get; set; }
         public object Body { get; set; }
     }
 }

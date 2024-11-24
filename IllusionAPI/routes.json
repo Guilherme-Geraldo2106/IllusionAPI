@@ -33,12 +33,38 @@
         }
       },
       {
-        "method": "GET",
+        "method": "POST",
         "path": "/login",
-        "response": {
-          "status": 200,
-          "body": "Authorized"
-        }
+        "requestBody": {
+          "user": "string",
+          "password": "string"
+        },
+        "response": [
+
+          {
+            "condition": "user == 'admin' && password == 'password123'",
+            "status": 200,
+            "body": {
+              "message": "Login successful",
+              "token": "abc123"
+            }
+          },
+          {
+            "condition": "user != 'admin' || password != 'password123'",
+            "status": 401,
+            "body": {
+              "error": "Invalid password"
+            }
+          },
+          {
+            "condition": "default",
+            "status": 400,
+            "body": {
+              "error": "Missing or invalid parameters"
+            }
+          }
+
+        ]
       }
     ]
   }
