@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json;
+using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -13,24 +14,49 @@ namespace IllusionAPI
         {
             foreach (IConfigurationSection routeSection in illusionRoutesSection)
             {
-                string routePath = routeSection.GetSection("path").Value;
-                string routeMethod = routeSection.GetSection("method").Value;
-                IllusionRoute illusionRoute = IllusionRoutes.SingleOrDefault(p => p.Path.Equals(routePath) && p.Method.Equals(routeMethod));
+                string routePath = routeSection.GetValue<string>("path");
+                string routeMethod = routeSection.GetValue<string>("method");
 
-                List<IConfigurationSection> bodySections = routeSection.GetSection("response:body").GetChildren().ToList();
+                IllusionRoute? illusionRoute = IllusionRoutes.FirstOrDefault(
+                    p => p.Path.Equals(routePath, StringComparison.OrdinalIgnoreCase) &&
+                         p.Method.Equals(routeMethod, StringComparison.OrdinalIgnoreCase));
 
-                if (bodySections.Any())
-                {
-                    var dictionary = bodySections.ToDictionary(
-                        section => section.Key,
-                        section => section.Value
-                    );
+                if (illusionRoute == null)
+                    continue;
 
-                    string json = JsonConvert.SerializeObject(dictionary, Formatting.Indented);
-                    illusionRoute.Response.Body = JsonConvert.DeserializeObject<object>(json);
-                }
+                var bodySections = routeSection.GetSection("response:body").GetChildren().ToList();
+
+                if (!bodySections.Any())
+                    continue;
+
+                bool isArray = bodySections.First().GetChildren().Any();
+                object formattedBody = isArray ? FormatBodyAsArray(bodySections) : FormatBodyAsObject(bodySections);
+
+                illusionRoute.Response.Body = formattedBody;
             }
         }
+
+        private object FormatBodyAsArray(List<IConfigurationSection> bodySections)
+        {
+            var bodyList = bodySections
+                .Select(section => section.GetChildren().ToDictionary(child => child.Key, child => child.Value))
+                .ToList();
+
+            return DeserializeJson(bodyList);
+        }
+
+        private object FormatBodyAsObject(List<IConfigurationSection> bodySections)
+        {
+            var bodyObject = bodySections.ToDictionary(section => section.Key, section => section.Value);
+            return DeserializeJson(bodyObject);
+        }
+
+        private object DeserializeJson(object input)
+        {
+            string json = JsonConvert.SerializeObject(input, Formatting.Indented);
+            return JsonConvert.DeserializeObject<object>(json) ?? new object();
+        }
+
 
         public static RouteConfig GenRouteConfig(IConfigurationSection irouteConfSection)
         {

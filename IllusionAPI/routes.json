@@ -3,69 +3,6 @@
     "illusionRoutes": [
       {
         "method": "GET",
-        "path": "/users",
-        "response": {
-          "status": 200,
-          "body": {
-            "id": 1,
-            "name": "Alicia"
-          }
-        }
-      },
-      {
-        "method": "POST",
-        "path": "/login",
-        "response": {
-          "status": 401,
-          "body": "Unauthorized"
-        }
-      },
-      {
-        "method": "GET",
-        "path": "/users/{id}",
-        "response": {
-          "status": 200,
-          "body": {
-            "id": "{id}",
-            "name": "Bob",
-            "email": "bob@example.com"
-          }
-        }
-      },
-      {
-        "method": "POST",
-        "path": "/register",
-        "response": {
-          "status": 201,
-          "body": {
-            "id": 2,
-            "name": "Charlie",
-            "email": "charlie@example.com"
-          }
-        }
-      },
-      {
-        "method": "PUT",
-        "path": "/users/{id}",
-        "response": {
-          "status": 200,
-          "body": {
-            "id": "{id}",
-            "name": "Charlie",
-            "email": "charlie.new@example.com"
-          }
-        }
-      },
-      {
-        "method": "DELETE",
-        "path": "/users/{id}",
-        "response": {
-          "status": 204,
-          "body": {}
-        }
-      },
-      {
-        "method": "GET",
         "path": "/posts",
         "response": {
           "status": 200,
@@ -96,41 +33,11 @@
         }
       },
       {
-        "method": "POST",
-        "path": "/comments",
-        "response": {
-          "status": 201,
-          "body": {
-            "id": 1,
-            "postId": 1,
-            "author": "Alice",
-            "content": "This is a comment."
-          }
-        }
-      },
-      {
         "method": "GET",
-        "path": "/comments/{id}",
+        "path": "/login",
         "response": {
           "status": 200,
-          "body": {
-            "id": "{id}",
-            "postId": 1,
-            "author": "Bob",
-            "content": "This is a comment reply."
-          }
-        }
-      },
-      {
-        "method": "GET",
-        "path": "/status",
-        "response": {
-          "status": 200,
-          "body": {
-            "server": "running",
-            "uptime": "5 hours",
-            "requests": 1500
-          }
+          "body": "Authorized"
         }
       }
     ]

@@ -17,6 +17,8 @@ builder.Services.AddSwaggerGen(options =>
         }
         return new[] { "default" }; 
     });
+
+    options.DocumentFilter<DynamicRoutesDocumentFilter>();
 });
 
 WebApplication app = builder.Build();
